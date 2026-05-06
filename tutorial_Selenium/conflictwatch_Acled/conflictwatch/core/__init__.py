@@ -1,0 +1,1 @@
+# ConflictWatch core package
