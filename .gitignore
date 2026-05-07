@@ -29,9 +29,4 @@ dist/
 # OS files
 .DS_Store
 thumbs.db
-venv/
-__pycache__/
-.env
-__pycache__/
-.env
 
