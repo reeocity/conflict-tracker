@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel
 from typing import Optional
+import re
 from auth import (
     create_user,
     get_user_by_email,
@@ -14,6 +15,18 @@ from auth import (
 )
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+def is_strong_password(password: str) -> bool:
+    if len(password) < 10:
+        return False
+    checks = [
+        re.search(r"[a-z]", password),
+        re.search(r"[A-Z]", password),
+        re.search(r"\d", password),
+        re.search(r"[^A-Za-z0-9]", password),
+    ]
+    return all(checks)
 
 
 # ─── Request/Response Models ──────────────────────────────────────────────────
@@ -82,9 +95,15 @@ async def register(req: RegisterRequest):
     if "@" not in req.email or "." not in req.email.split("@")[1]:
         raise HTTPException(status_code=400, detail="Invalid email format")
     
-    # Validate password length
-    if len(req.password) < 6:
-        raise HTTPException(status_code=400, detail="Password must be at least 6 characters")
+    # Validate password strength
+    if not is_strong_password(req.password):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "Password must be at least 10 characters and include upper/lowercase "
+                "letters, a number, and a special character"
+            ),
+        )
     
     # Create user
     user = create_user(req.email, req.password)
