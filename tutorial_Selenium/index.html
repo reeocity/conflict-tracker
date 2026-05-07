@@ -83,6 +83,101 @@
             align-items: center;
         }
 
+        .preferences {
+            background: white;
+            padding: 24px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .preferences-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 20px;
+            margin-top: 16px;
+        }
+
+        .pref-panel {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 18px;
+            background: #f8fafc;
+        }
+
+        .pref-panel h3 {
+            font-size: 14px;
+            margin-bottom: 12px;
+            color: #1e3c72;
+        }
+
+        .pref-note {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+
+        .pref-row {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .pref-row label {
+            font-size: 13px;
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .pref-row input[type="email"],
+        .pref-row input[type="text"] {
+            width: 100%;
+            min-width: unset;
+        }
+
+        .pref-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .pref-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 10px;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            font-size: 13px;
+        }
+
+        .pref-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .secondary-button {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .secondary-button:hover {
+            background: #d1d5db;
+        }
+
+        .status-line {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .status-line strong {
+            color: #1e3c72;
+        }
+
         input, select {
             padding: 10px 15px;
             border: 1px solid #ddd;
@@ -244,6 +339,9 @@
             .dashboard {
                 grid-template-columns: 1fr;
             }
+            .preferences-grid {
+                grid-template-columns: 1fr;
+            }
             .controls {
                 flex-direction: column;
             }
@@ -287,6 +385,47 @@
             <button onclick="fetchAndDisplay()">🔄 Refresh</button>
         </div>
 
+        <section class="preferences">
+            <h2 style="color:#1e3c72; font-size:20px;">Account & Alerts</h2>
+            <p class="subtitle">Users can store alert preferences here. Email is saved locally for now; browser notifications are requested from the page.</p>
+
+            <div class="preferences-grid">
+                <div class="pref-panel">
+                    <h3>Alert Profile</h3>
+                    <div class="pref-row">
+                        <label for="email-input">Email address</label>
+                        <input type="email" id="email-input" placeholder="you@example.com">
+                    </div>
+                    <div class="pref-row">
+                        <label for="country-input">Countries to watch</label>
+                        <input type="text" id="country-input" placeholder="Ukraine, Gaza, Iran">
+                    </div>
+                    <div class="pref-row">
+                        <label>Alert categories</label>
+                        <div class="pref-tags">
+                            <label class="pref-tag"><input type="checkbox" value="conflict" class="category-pref" checked> Conflict</label>
+                            <label class="pref-tag"><input type="checkbox" value="protest" class="category-pref" checked> Protest</label>
+                            <label class="pref-tag"><input type="checkbox" value="violence" class="category-pref" checked> Violence</label>
+                        </div>
+                    </div>
+                    <div class="pref-actions">
+                        <button id="save-preferences">Save preferences</button>
+                        <button id="enable-notifications" class="secondary-button">Enable browser notifications</button>
+                    </div>
+                    <div class="status-line" id="preferences-status">No alert profile saved yet.</div>
+                    <p class="pref-note">This is the user-facing setup area for future accounts, emails, and alerts. To send email for real, a backend mail service and login system still need to be added.</p>
+                </div>
+
+                <div class="pref-panel">
+                    <h3>How notifications work</h3>
+                    <div class="status-line"><strong>Browser notifications:</strong> the page asks permission after you click enable.</div>
+                    <div class="status-line"><strong>Email alerts:</strong> preference stored now; delivery later needs backend SMTP or an email provider.</div>
+                    <div class="status-line"><strong>Matching rules:</strong> only selected countries/categories trigger alerts.</div>
+                    <div class="status-line"><strong>Saved locally:</strong> the alert profile is stored in your browser so it persists when you reopen the page.</div>
+                </div>
+            </div>
+        </section>
+
         <div id="error-container"></div>
 
         <div class="events-container" id="events">
@@ -302,6 +441,88 @@
 
     <script>
         const API_URL = 'http://localhost:8000';
+        const PREF_KEY = 'conflict-tracker-alerts';
+        let lastEventIds = new Set();
+
+        function loadPreferences() {
+            try {
+                return JSON.parse(localStorage.getItem(PREF_KEY)) || {
+                    email: '',
+                    countries: '',
+                    categories: ['conflict', 'protest', 'violence'],
+                    browserNotifications: false
+                };
+            } catch {
+                return {
+                    email: '',
+                    countries: '',
+                    categories: ['conflict', 'protest', 'violence'],
+                    browserNotifications: false
+                };
+            }
+        }
+
+        function savePreferences(preferences) {
+            localStorage.setItem(PREF_KEY, JSON.stringify(preferences));
+        }
+
+        function syncPreferencesUI() {
+            const preferences = loadPreferences();
+            document.getElementById('email-input').value = preferences.email || '';
+            document.getElementById('country-input').value = preferences.countries || '';
+            document.querySelectorAll('.category-pref').forEach(input => {
+                input.checked = preferences.categories.includes(input.value);
+            });
+            updatePreferencesStatus(preferences);
+        }
+
+        function updatePreferencesStatus(preferences) {
+            const status = document.getElementById('preferences-status');
+            const countries = preferences.countries ? preferences.countries : 'all countries';
+            const categories = preferences.categories.length ? preferences.categories.join(', ') : 'no categories selected';
+            const email = preferences.email || 'no email saved';
+            const browser = preferences.browserNotifications ? 'enabled' : 'disabled';
+            status.innerHTML = `<strong>Email:</strong> ${email} | <strong>Countries:</strong> ${countries} | <strong>Categories:</strong> ${categories} | <strong>Browser notifications:</strong> ${browser}`;
+        }
+
+        function getPreferences() {
+            const categoryInputs = Array.from(document.querySelectorAll('.category-pref'));
+            return {
+                email: document.getElementById('email-input').value.trim(),
+                countries: document.getElementById('country-input').value.trim(),
+                categories: categoryInputs.filter(input => input.checked).map(input => input.value),
+                browserNotifications: loadPreferences().browserNotifications
+            };
+        }
+
+        function matchesPreferences(eventItem, preferences) {
+            const categories = preferences.categories || [];
+            const countryList = (preferences.countries || '')
+                .split(',')
+                .map(item => item.trim().toLowerCase())
+                .filter(Boolean);
+            const matchesCategory = !categories.length || categories.includes(eventItem.category);
+            const matchesCountry = !countryList.length || countryList.includes((eventItem.country || '').toLowerCase());
+            return matchesCategory && matchesCountry;
+        }
+
+        function notifyNewEvents(events) {
+            const preferences = loadPreferences();
+            if (!preferences.browserNotifications || Notification.permission !== 'granted') {
+                return;
+            }
+
+            const newMatches = events.filter(eventItem => !lastEventIds.has(String(eventItem.id)) && matchesPreferences(eventItem, preferences));
+            if (!newMatches.length) {
+                return;
+            }
+
+            const preview = newMatches.slice(0, 3).map(eventItem => `${eventItem.country}: ${eventItem.headline}`).join('\n');
+            new Notification('Conflict Tracker alert', {
+                body: preview,
+                icon: 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Ctext y=%2250%22 font-size=%2248%22%3E%F0%9F%8C%8D%3C/text%3E%3C/svg%3E'
+            });
+        }
 
         async function checkApiStatus() {
             try {
@@ -330,6 +551,7 @@
             try {
                 const response = await fetch(`${API_URL}/api/news`);
                 const events = await response.json();
+                lastEventIds = new Set(events.map(eventItem => String(eventItem.id)));
 
                 // Apply filters
                 const searchQuery = document.getElementById('search').value.toLowerCase();
@@ -345,6 +567,7 @@
 
                 // Update stats
                 updateStats(events);
+                notifyNewEvents(events);
 
                 // Display events
                 if (filtered.length === 0) {
@@ -391,11 +614,44 @@
             document.getElementById('events').innerHTML = '';
         }
 
+        async function enableNotifications() {
+            if (!('Notification' in window)) {
+                alert('This browser does not support notifications.');
+                return;
+            }
+
+            const permission = await Notification.requestPermission();
+            const preferences = loadPreferences();
+            preferences.browserNotifications = permission === 'granted';
+            savePreferences(preferences);
+            updatePreferencesStatus(preferences);
+            if (permission === 'granted') {
+                new Notification('Conflict Tracker', { body: 'Browser notifications are now enabled for your saved alerts.' });
+            }
+        }
+
+        function persistPreferencesFromForm() {
+            const preferences = getPreferences();
+            const stored = loadPreferences();
+            preferences.browserNotifications = stored.browserNotifications;
+            savePreferences(preferences);
+            updatePreferencesStatus(preferences);
+        }
+
         // Event listeners
         document.getElementById('search').addEventListener('input', fetchAndDisplay);
         document.getElementById('category-filter').addEventListener('change', fetchAndDisplay);
+        document.getElementById('save-preferences').addEventListener('click', persistPreferencesFromForm);
+        document.getElementById('enable-notifications').addEventListener('click', enableNotifications);
+
+        document.getElementById('email-input').addEventListener('input', persistPreferencesFromForm);
+        document.getElementById('country-input').addEventListener('input', persistPreferencesFromForm);
+        document.querySelectorAll('.category-pref').forEach(input => {
+            input.addEventListener('change', persistPreferencesFromForm);
+        });
 
         // Initial load
+        syncPreferencesUI();
         checkApiStatus();
         fetchAndDisplay();
 
