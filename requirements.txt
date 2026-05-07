@@ -1,0 +1,11 @@
+# Python dependencies for conflict-tracker (backend/scrapers)
+fastapi
+uvicorn
+pydantic
+python-multipart
+requests
+selenium
+webdriver-manager
+beautifulsoup4
+lxml
+psycopg2-binary
