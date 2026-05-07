@@ -91,6 +91,121 @@
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
+        .auth-bar {
+            background: rgba(255, 255, 255, 0.14);
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            color: white;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .auth-bar strong {
+            color: #ffffff;
+        }
+
+        .auth-bar .auth-text {
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .auth-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            font-size: 13px;
+        }
+
+        .auth-pill span {
+            font-weight: 700;
+        }
+
+        .auth-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.72);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 50;
+        }
+
+        .auth-modal.show {
+            display: flex;
+        }
+
+        .auth-card {
+            width: min(560px, 100%);
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+            overflow: hidden;
+        }
+
+        .auth-card header {
+            margin: 0;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 22px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+        }
+
+        .auth-card header h2 {
+            font-size: 22px;
+            margin-bottom: 6px;
+            color: white;
+        }
+
+        .auth-card-body {
+            padding: 22px;
+        }
+
+        .auth-form {
+            display: grid;
+            gap: 14px;
+        }
+
+        .auth-tabs {
+            display: inline-flex;
+            border: 1px solid #d1d5db;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-bottom: 16px;
+        }
+
+        .auth-tab {
+            padding: 10px 16px;
+            background: white;
+            color: #1e3c72;
+            border: none;
+            border-radius: 0;
+        }
+
+        .auth-tab.active {
+            background: #1e3c72;
+            color: white;
+        }
+
+        .auth-inline-note {
+            font-size: 13px;
+            color: #475569;
+            margin-top: 8px;
+        }
+
+        .auth-hidden {
+            display: none !important;
+        }
+
         .preferences-grid {
             display: grid;
             grid-template-columns: 1.2fr 1fr;
@@ -339,6 +454,10 @@
             .dashboard {
                 grid-template-columns: 1fr;
             }
+            .auth-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
             .preferences-grid {
                 grid-template-columns: 1fr;
             }
@@ -358,6 +477,14 @@
             <h1>🌍 Conflict Tracker</h1>
             <p class="subtitle">Real-time global conflict monitoring • <span class="api-status" id="api-status">Loading...</span></p>
         </header>
+
+        <div class="auth-bar" id="auth-bar">
+            <div class="auth-text">
+                <strong>Notifications require an account.</strong> Sign in or create an account to save country/category alerts and receive browser prompts for new events.
+            </div>
+            <div class="auth-pill" id="auth-pill"><span>Signed out</span> Alerts hidden</div>
+            <button id="open-auth">Sign in / Register</button>
+        </div>
 
         <div class="dashboard">
             <div class="stat-card">
@@ -385,7 +512,7 @@
             <button onclick="fetchAndDisplay()">🔄 Refresh</button>
         </div>
 
-        <section class="preferences">
+        <section class="preferences auth-hidden" id="preferences-section">
             <h2 style="color:#1e3c72; font-size:20px;">Account & Alerts</h2>
             <p class="subtitle">Users can store alert preferences here. Email is saved locally for now; browser notifications are requested from the page.</p>
 
@@ -413,7 +540,7 @@
                         <button id="enable-notifications" class="secondary-button">Enable browser notifications</button>
                     </div>
                     <div class="status-line" id="preferences-status">No alert profile saved yet.</div>
-                    <p class="pref-note">This is the user-facing setup area for future accounts, emails, and alerts. To send email for real, a backend mail service and login system still need to be added.</p>
+                    <p class="pref-note">This panel appears only after sign in. Email delivery still needs a backend mail service and user table.</p>
                 </div>
 
                 <div class="pref-panel">
@@ -439,10 +566,55 @@
         </footer>
     </div>
 
+    <div class="auth-modal" id="auth-modal" aria-hidden="true">
+        <div class="auth-card">
+            <header>
+                <h2>Sign in to manage alerts</h2>
+                <p>Sign in or create an account to unlock country and category notifications.</p>
+            </header>
+            <div class="auth-card-body">
+                <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+                    <button class="auth-tab active" id="auth-tab-signin" type="button">Sign in</button>
+                    <button class="auth-tab" id="auth-tab-register" type="button">Register</button>
+                </div>
+
+                <form class="auth-form" id="auth-form">
+                    <div class="pref-row">
+                        <label for="auth-email">Email</label>
+                        <input type="email" id="auth-email" placeholder="you@example.com" required>
+                    </div>
+                    <div class="pref-row">
+                        <label for="auth-password">Password</label>
+                        <input type="password" id="auth-password" placeholder="Enter a password" required>
+                    </div>
+                    <div class="pref-actions">
+                        <button type="submit" id="auth-submit">Sign in</button>
+                        <button type="button" class="secondary-button" id="close-auth">Cancel</button>
+                    </div>
+                    <div class="auth-inline-note" id="auth-note">New here? Switch to Register to create an account.</div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         const API_URL = 'http://localhost:8000';
+        const AUTH_KEY = 'conflict-tracker-auth';
         const PREF_KEY = 'conflict-tracker-alerts';
+        let authMode = 'signin';
         let lastEventIds = new Set();
+
+        function loadAuth() {
+            try {
+                return JSON.parse(localStorage.getItem(AUTH_KEY)) || { signedIn: false, email: '' };
+            } catch {
+                return { signedIn: false, email: '' };
+            }
+        }
+
+        function saveAuth(auth) {
+            localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+        }
 
         function loadPreferences() {
             try {
@@ -474,6 +646,59 @@
                 input.checked = preferences.categories.includes(input.value);
             });
             updatePreferencesStatus(preferences);
+        }
+
+        function syncAuthUI() {
+            const auth = loadAuth();
+            const preferencesSection = document.getElementById('preferences-section');
+            const authBar = document.getElementById('auth-bar');
+            const authPill = document.getElementById('auth-pill');
+
+            if (auth.signedIn) {
+                preferencesSection.classList.remove('auth-hidden');
+                authBar.classList.add('auth-hidden');
+                authPill.innerHTML = `<span>${auth.email}</span> signed in`;
+            } else {
+                preferencesSection.classList.add('auth-hidden');
+                authBar.classList.remove('auth-hidden');
+                authPill.innerHTML = '<span>Signed out</span> Alerts hidden';
+            }
+        }
+
+        function openAuthModal(mode = 'signin') {
+            authMode = mode;
+            document.getElementById('auth-modal').classList.add('show');
+            document.getElementById('auth-modal').setAttribute('aria-hidden', 'false');
+            updateAuthModeUI();
+        }
+
+        function closeAuthModal() {
+            document.getElementById('auth-modal').classList.remove('show');
+            document.getElementById('auth-modal').setAttribute('aria-hidden', 'true');
+        }
+
+        function updateAuthModeUI() {
+            const signInTab = document.getElementById('auth-tab-signin');
+            const registerTab = document.getElementById('auth-tab-register');
+            const submit = document.getElementById('auth-submit');
+            const note = document.getElementById('auth-note');
+
+            const register = authMode === 'register';
+            signInTab.classList.toggle('active', !register);
+            registerTab.classList.toggle('active', register);
+            submit.textContent = register ? 'Register' : 'Sign in';
+            note.textContent = register
+                ? 'Create your account to save alert settings and enable notifications.'
+                : 'New here? Switch to Register to create an account.';
+        }
+
+        function requireAuth() {
+            const auth = loadAuth();
+            if (!auth.signedIn) {
+                openAuthModal('register');
+                return false;
+            }
+            return true;
         }
 
         function updatePreferencesStatus(preferences) {
@@ -508,6 +733,9 @@
 
         function notifyNewEvents(events) {
             const preferences = loadPreferences();
+            if (!loadAuth().signedIn) {
+                return;
+            }
             if (!preferences.browserNotifications || Notification.permission !== 'granted') {
                 return;
             }
@@ -585,6 +813,13 @@
                                     <span class="event-country">${e.country}</span>
                                     <span class="event-category category-${e.category}">${e.category}</span>
                                 </div>
+                                <button
+                                    type="button"
+                                    class="secondary-button notify-event-btn"
+                                    data-country="${e.country}"
+                                    data-category="${e.category}"
+                                    data-headline="${e.headline.replace(/"/g, '&quot;')}"
+                                >Get notified like this</button>
                             </div>
                             <div class="event-title">${e.headline}</div>
                             <div class="event-date">📅 ${new Date(e.date).toLocaleDateString()}</div>
@@ -615,6 +850,10 @@
         }
 
         async function enableNotifications() {
+            if (!requireAuth()) {
+                return;
+            }
+
             if (!('Notification' in window)) {
                 alert('This browser does not support notifications.');
                 return;
@@ -631,6 +870,10 @@
         }
 
         function persistPreferencesFromForm() {
+            if (!requireAuth()) {
+                return;
+            }
+
             const preferences = getPreferences();
             const stored = loadPreferences();
             preferences.browserNotifications = stored.browserNotifications;
@@ -638,11 +881,84 @@
             updatePreferencesStatus(preferences);
         }
 
+        function prefillAlertPreferences(country, category) {
+            const current = loadPreferences();
+            if (country) {
+                const countries = new Set(
+                    (current.countries || '')
+                        .split(',')
+                        .map(item => item.trim())
+                        .filter(Boolean)
+                );
+                countries.add(country);
+                current.countries = Array.from(countries).join(', ');
+            }
+            if (category && !current.categories.includes(category)) {
+                current.categories = [...current.categories, category];
+            }
+            savePreferences(current);
+            syncPreferencesUI();
+        }
+
+        function openEventAlertFlow(country, category, headline) {
+            if (!loadAuth().signedIn) {
+                openAuthModal('register');
+                document.getElementById('auth-note').textContent = `Create an account to get alerts for ${country} / ${category}.`;
+                return;
+            }
+
+            prefillAlertPreferences(country, category);
+            const preferencesSection = document.getElementById('preferences-section');
+            preferencesSection.classList.remove('auth-hidden');
+            preferencesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('preferences-status').innerHTML = `<strong>Email:</strong> ${loadPreferences().email || 'saved'} | <strong>Countries:</strong> ${country} | <strong>Categories:</strong> ${category} | <strong>Browser notifications:</strong> ${loadPreferences().browserNotifications ? 'enabled' : 'disabled'}`;
+            if (headline) {
+                document.getElementById('preferences-status').innerHTML += `<br><strong>Alerting for:</strong> ${headline}`;
+            }
+        }
+
+        function handleAuthSubmit(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+
+            if (!email || !password) {
+                alert('Enter an email and password to continue.');
+                return;
+            }
+
+            saveAuth({ signedIn: true, email });
+            const preferences = loadPreferences();
+            preferences.email = email;
+            savePreferences(preferences);
+            syncAuthUI();
+            syncPreferencesUI();
+            closeAuthModal();
+        }
+
         // Event listeners
         document.getElementById('search').addEventListener('input', fetchAndDisplay);
         document.getElementById('category-filter').addEventListener('change', fetchAndDisplay);
+        document.getElementById('open-auth').addEventListener('click', () => openAuthModal('signin'));
+        document.getElementById('close-auth').addEventListener('click', closeAuthModal);
+        document.getElementById('auth-form').addEventListener('submit', handleAuthSubmit);
+        document.getElementById('auth-tab-signin').addEventListener('click', () => {
+            authMode = 'signin';
+            updateAuthModeUI();
+        });
+        document.getElementById('auth-tab-register').addEventListener('click', () => {
+            authMode = 'register';
+            updateAuthModeUI();
+        });
         document.getElementById('save-preferences').addEventListener('click', persistPreferencesFromForm);
         document.getElementById('enable-notifications').addEventListener('click', enableNotifications);
+        document.getElementById('events').addEventListener('click', event => {
+            const button = event.target.closest('.notify-event-btn');
+            if (!button) {
+                return;
+            }
+            openEventAlertFlow(button.dataset.country, button.dataset.category, button.dataset.headline);
+        });
 
         document.getElementById('email-input').addEventListener('input', persistPreferencesFromForm);
         document.getElementById('country-input').addEventListener('input', persistPreferencesFromForm);
@@ -651,6 +967,7 @@
         });
 
         // Initial load
+        syncAuthUI();
         syncPreferencesUI();
         checkApiStatus();
         fetchAndDisplay();
