@@ -12,9 +12,16 @@ if not DATABASE_URL:
     raise SystemExit(1)
 
 import psycopg2
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse
 
-print('Connecting to:', DATABASE_URL)
+
+def redact_database_url(url: str) -> str:
+    parsed = urlparse(url)
+    host = parsed.hostname or "unknown-host"
+    database = (parsed.path or "/").lstrip("/") or "unknown-db"
+    return f"{parsed.scheme}://***:***@{host}/{database}"
+
+print('Connecting to:', redact_database_url(DATABASE_URL))
 conn = psycopg2.connect(DATABASE_URL)
 try:
     with conn.cursor() as cur:
