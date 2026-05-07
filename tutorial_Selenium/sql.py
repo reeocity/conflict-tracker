@@ -3,14 +3,19 @@ import xml.etree.ElementTree as ET
 import psycopg2
 from psycopg2 import sql
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # ─── STEP 1: Database Connection ─────────────────────────────────────────────
 def connect_db():
     return psycopg2.connect(
-        host     = "localhost",
-        database = "conflict_news",
-        user     = "postgres",
-        password = "YOUR_PASSWORD_HERE"  # ← change this
+        host     = os.getenv("DB_HOST", "localhost"),
+        database = os.getenv("DB_NAME", "conflict_news"),
+        user     = os.getenv("DB_USER", "postgres"),
+        password = os.getenv("DB_PASSWORD")
     )
 
 # ─── STEP 2: Create Table If It Doesn't Exist ────────────────────────────────
