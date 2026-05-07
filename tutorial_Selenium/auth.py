@@ -9,7 +9,11 @@ from db import connect_db
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-this-in-production")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY or len(SECRET_KEY.strip()) < 32:
+    raise RuntimeError(
+        "JWT_SECRET_KEY must be set and at least 32 characters long"
+    )
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 7
 
