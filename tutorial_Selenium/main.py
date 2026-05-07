@@ -6,6 +6,8 @@ from typing import List
 from pydantic import BaseModel
 import os
 
+from db import connect_db, fetch_events, fetch_stats
+
 app = FastAPI(title="Conflict News API")
 
 # ─── CORS (allow React frontend to talk to backend) ───────────────────────────
@@ -50,22 +52,77 @@ def root():
 
 @app.get("/api/news", response_model=List[NewsItem])
 def get_news():
+    try:
+        conn = connect_db()
+        try:
+            rows = fetch_events(conn)
+            if rows:
+                return [
+                    NewsItem(
+                        id=row[0],
+                        country=row[1] or "Unknown",
+                        headline=row[2],
+                        date=row[3] or "",
+                        category=row[4] or "general",
+                    )
+                    for row in rows
+                ]
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
     return SAMPLE_NEWS
 
 @app.get("/api/news/{country}")
 def get_news_by_country(country: str):
+    try:
+        conn = connect_db()
+        try:
+            rows = fetch_events(conn, country=country)
+            if rows:
+                return [
+                    NewsItem(
+                        id=row[0],
+                        country=row[1] or "Unknown",
+                        headline=row[2],
+                        date=row[3] or "",
+                        category=row[4] or "general",
+                    )
+                    for row in rows
+                ]
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
     results = [n for n in SAMPLE_NEWS if n.country.lower() == country.lower()]
     return results
 
 @app.get("/api/stats")
 def get_stats():
+    try:
+        conn = connect_db()
+        try:
+            total, categories, countries = fetch_stats(conn)
+            if total:
+                return {
+                    "total": total,
+                    "by_category": categories,
+                    "by_country": countries,
+                }
+        finally:
+            conn.close()
+    except Exception:
+        pass
+
     categories = {}
     countries = {}
     for item in SAMPLE_NEWS:
         categories[item.category] = categories.get(item.category, 0) + 1
-        countries[item.country]   = countries.get(item.country, 0) + 1
+        countries[item.country] = countries.get(item.country, 0) + 1
     return {
         "total": len(SAMPLE_NEWS),
         "by_category": categories,
-        "by_country": countries
+        "by_country": countries,
     }
