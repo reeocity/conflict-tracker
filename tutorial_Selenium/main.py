@@ -6,7 +6,8 @@ from typing import List
 from pydantic import BaseModel
 import os
 
-from db import connect_db, fetch_events, fetch_stats
+from db import connect_db, fetch_events, fetch_stats, setup_db, setup_auth_db
+from routes.auth import router as auth_router
 
 app = FastAPI(title="Conflict News API")
 
@@ -21,6 +22,23 @@ app.add_middleware(
 # ─── Mount static files ───────────────────────────────────────────────────────
 static_path = os.path.join(os.path.dirname(__file__), "..", "static")
 app.mount("/static", StaticFiles(directory=static_path), name="static")
+
+# ─── Register routes ───────────────────────────────────────────────────────────
+app.include_router(auth_router)
+
+# ─── Startup event ────────────────────────────────────────────────────────────
+@app.on_event("startup")
+async def startup_event():
+    """Initialize database tables on startup"""
+    try:
+        conn = connect_db()
+        try:
+            setup_db(conn)
+            setup_auth_db(conn)
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"Database initialization warning: {e}")
 
 # ─── Data Model ───────────────────────────────────────────────────────────────
 class NewsItem(BaseModel):

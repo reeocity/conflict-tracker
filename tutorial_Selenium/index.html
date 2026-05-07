@@ -486,6 +486,13 @@
             <button id="open-auth">Sign in / Register</button>
         </div>
 
+        <div id="auth-bar-signed-in" class="auth-bar auth-hidden">
+            <div class="auth-text">
+                <strong id="user-email-display">User</strong> • Alerts are active
+            </div>
+            <button id="logout-btn" class="secondary-button">Sign out</button>
+        </div>
+
         <div class="dashboard">
             <div class="stat-card">
                 <h3>Total Events</h3>
@@ -606,14 +613,29 @@
 
         function loadAuth() {
             try {
-                return JSON.parse(localStorage.getItem(AUTH_KEY)) || { signedIn: false, email: '' };
+                const auth = JSON.parse(localStorage.getItem(AUTH_KEY));
+                if (auth && auth.token && auth.user) {
+                    return auth;
+                }
+                return { token: null, user: null };
             } catch {
-                return { signedIn: false, email: '' };
+                return { token: null, user: null };
             }
         }
 
         function saveAuth(auth) {
-            localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+            if (auth.token && auth.user) {
+                localStorage.setItem(AUTH_KEY, JSON.stringify(auth));
+            } else {
+                localStorage.removeItem(AUTH_KEY);
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem(AUTH_KEY);
+            localStorage.removeItem(PREF_KEY);
+            syncAuthUI();
+            syncPreferencesUI();
         }
 
         function loadPreferences() {
@@ -638,7 +660,51 @@
             localStorage.setItem(PREF_KEY, JSON.stringify(preferences));
         }
 
-        function syncPreferencesUI() {
+        function getAuthHeaders() {
+            const auth = loadAuth();
+            if (!auth.token) {
+                return {};
+            }
+            return {
+                'Authorization': `Bearer ${auth.token}`
+            };
+        }
+
+        async function syncPreferencesUI() {
+            const auth = loadAuth();
+            if (!auth.token) {
+                return;
+            }
+
+            // Load preferences from backend
+            try {
+                const response = await fetch(`${API_URL}/auth/subscriptions`, {
+                    headers: getAuthHeaders()
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const subscriptions = data.subscriptions || [];
+                    
+                    // Rebuild UI from backend subscriptions
+                    const countries = new Set();
+                    const categories = new Set();
+                    
+                    subscriptions.forEach(sub => {
+                        if (sub.country) countries.add(sub.country);
+                        if (sub.category) categories.add(sub.category);
+                    });
+                    
+                    const preferences = loadPreferences();
+                    preferences.countries = Array.from(countries).join(', ');
+                    preferences.categories = Array.from(categories);
+                    preferences.email = auth.user.email;
+                    savePreferences(preferences);
+                }
+            } catch (e) {
+                console.warn('Failed to load backend subscriptions:', e);
+            }
+
+            // Update UI
             const preferences = loadPreferences();
             document.getElementById('email-input').value = preferences.email || '';
             document.getElementById('country-input').value = preferences.countries || '';
@@ -652,16 +718,18 @@
             const auth = loadAuth();
             const preferencesSection = document.getElementById('preferences-section');
             const authBar = document.getElementById('auth-bar');
-            const authPill = document.getElementById('auth-pill');
+            const authBarSignedIn = document.getElementById('auth-bar-signed-in');
+            const userEmailDisplay = document.getElementById('user-email-display');
 
-            if (auth.signedIn) {
+            if (auth.token && auth.user) {
                 preferencesSection.classList.remove('auth-hidden');
                 authBar.classList.add('auth-hidden');
-                authPill.innerHTML = `<span>${auth.email}</span> signed in`;
+                authBarSignedIn.classList.remove('auth-hidden');
+                userEmailDisplay.textContent = auth.user.email;
             } else {
                 preferencesSection.classList.add('auth-hidden');
                 authBar.classList.remove('auth-hidden');
-                authPill.innerHTML = '<span>Signed out</span> Alerts hidden';
+                authBarSignedIn.classList.add('auth-hidden');
             }
         }
 
@@ -733,7 +801,8 @@
 
         function notifyNewEvents(events) {
             const preferences = loadPreferences();
-            if (!loadAuth().signedIn) {
+            const auth = loadAuth();
+            if (!auth.token) {
                 return;
             }
             if (!preferences.browserNotifications || Notification.permission !== 'granted') {
@@ -755,7 +824,7 @@
         async function checkApiStatus() {
             try {
                 const response = await fetch(`${API_URL}/api/stats`, {
-                    headers: { 'Accept': 'application/json' }
+                    headers: { 'Accept': 'application/json', ...getAuthHeaders() }
                 });
                 if (response.ok) {
                     document.getElementById('api-status').textContent = '✅ API Online';
@@ -777,7 +846,9 @@
             }
 
             try {
-                const response = await fetch(`${API_URL}/api/news`);
+                const response = await fetch(`${API_URL}/api/news`, {
+                    headers: getAuthHeaders()
+                });
                 const events = await response.json();
                 lastEventIds = new Set(events.map(eventItem => String(eventItem.id)));
 
@@ -869,7 +940,7 @@
             }
         }
 
-        function persistPreferencesFromForm() {
+        async function persistPreferencesFromForm() {
             if (!requireAuth()) {
                 return;
             }
@@ -878,6 +949,32 @@
             const stored = loadPreferences();
             preferences.browserNotifications = stored.browserNotifications;
             savePreferences(preferences);
+
+            // Save to backend
+            try {
+                // Get countries as array
+                const countries = preferences.countries
+                    .split(',')
+                    .map(c => c.trim())
+                    .filter(c => c);
+                
+                // Save each subscription to backend
+                for (const country of countries) {
+                    for (const category of preferences.categories) {
+                        await fetch(`${API_URL}/auth/subscriptions`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...getAuthHeaders()
+                            },
+                            body: JSON.stringify({ country, category })
+                        });
+                    }
+                }
+            } catch (e) {
+                console.warn('Failed to save to backend:', e);
+            }
+
             updatePreferencesStatus(preferences);
         }
 
@@ -901,7 +998,8 @@
         }
 
         function openEventAlertFlow(country, category, headline) {
-            if (!loadAuth().signedIn) {
+            const auth = loadAuth();
+            if (!auth.token) {
                 openAuthModal('register');
                 document.getElementById('auth-note').textContent = `Create an account to get alerts for ${country} / ${category}.`;
                 return;
@@ -917,7 +1015,7 @@
             }
         }
 
-        function handleAuthSubmit(event) {
+        async function handleAuthSubmit(event) {
             event.preventDefault();
             const email = document.getElementById('auth-email').value.trim();
             const password = document.getElementById('auth-password').value.trim();
@@ -927,13 +1025,34 @@
                 return;
             }
 
-            saveAuth({ signedIn: true, email });
-            const preferences = loadPreferences();
-            preferences.email = email;
-            savePreferences(preferences);
-            syncAuthUI();
-            syncPreferencesUI();
-            closeAuthModal();
+            const endpoint = authMode === 'register' ? '/auth/register' : '/auth/login';
+            
+            try {
+                const response = await fetch(`${API_URL}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    saveAuth({
+                        token: data.access_token,
+                        user: data.user
+                    });
+                    syncAuthUI();
+                    await syncPreferencesUI();
+                    closeAuthModal();
+                    document.getElementById('auth-email').value = '';
+                    document.getElementById('auth-password').value = '';
+                    fetchAndDisplay();
+                } else {
+                    const error = await response.json();
+                    alert(`Error: ${error.detail || 'Authentication failed'}`);
+                }
+            } catch (error) {
+                alert(`Error: ${error.message}`);
+            }
         }
 
         // Event listeners
@@ -942,6 +1061,10 @@
         document.getElementById('open-auth').addEventListener('click', () => openAuthModal('signin'));
         document.getElementById('close-auth').addEventListener('click', closeAuthModal);
         document.getElementById('auth-form').addEventListener('submit', handleAuthSubmit);
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            logout();
+            fetchAndDisplay();
+        });
         document.getElementById('auth-tab-signin').addEventListener('click', () => {
             authMode = 'signin';
             updateAuthModeUI();

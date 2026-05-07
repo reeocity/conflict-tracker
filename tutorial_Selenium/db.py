@@ -81,6 +81,39 @@ def setup_db(conn):
         conn.commit()
 
 
+def setup_auth_db(conn):
+    """Create user authentication tables"""
+    with conn.cursor() as cur:
+        # Users table
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+            """
+        )
+        cur.execute("CREATE INDEX IF NOT EXISTS users_email_idx ON users (email);")
+        
+        # User alert subscriptions table
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_alert_subscriptions (
+                id SERIAL PRIMARY KEY,
+                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                country VARCHAR(100),
+                category VARCHAR(50),
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+            """
+        )
+        cur.execute("CREATE INDEX IF NOT EXISTS subs_user_idx ON user_alert_subscriptions (user_id);")
+        conn.commit()
+
+
 def detect_country(text: str) -> str:
     text_lower = (text or "").lower()
     for alias, country in COUNTRY_ALIASES.items():
