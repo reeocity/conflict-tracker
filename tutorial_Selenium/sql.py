@@ -1,126 +1,63 @@
 import requests
 import xml.etree.ElementTree as ET
-import psycopg2
-from psycopg2 import sql
-from datetime import datetime
-import os
-from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+from db import connect_db, detect_category, detect_country, save_event, setup_db
 
-# ─── STEP 1: Database Connection ─────────────────────────────────────────────
-def connect_db():
-    return psycopg2.connect(
-        host     = os.getenv("DB_HOST", "localhost"),
-        database = os.getenv("DB_NAME", "conflict_news"),
-        user     = os.getenv("DB_USER", "postgres"),
-        password = os.getenv("DB_PASSWORD")
-    )
 
-# ─── STEP 2: Create Table If It Doesn't Exist ────────────────────────────────
-def setup_db(conn):
-    with conn.cursor() as cur:
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS events (
-                id        SERIAL PRIMARY KEY,
-                title     TEXT NOT NULL,
-                link      TEXT UNIQUE,       -- prevents duplicates
-                date      TEXT,
-                region    TEXT,
-                scraped_at TIMESTAMP DEFAULT NOW()
-            );
-        """)
-        conn.commit()
-    print("✅ Database ready")
+KEYWORDS = ["war", "attack", "protest", "violence", "conflict", "strike", "killed", "clash", "airstrike", "military"]
 
-# ─── STEP 3: Save Event to DB ────────────────────────────────────────────────
-def save_event(conn, title, link, date, region):
-    with conn.cursor() as cur:
-        cur.execute("""
-            INSERT INTO events (title, link, date, region)
-            VALUES (%s, %s, %s, %s)
-            ON CONFLICT (link) DO NOTHING;  -- skip if already saved
-        """, (title, link, date, region))
-        conn.commit()
-
-# ─── STEP 4: Country List ────────────────────────────────────────────────────
-COUNTRIES = [
-    "Nigeria", "Ukraine", "Russia", "Israel", "Palestine", "Gaza",
-    "Sudan", "Syria", "Iraq", "Iran", "Afghanistan", "Pakistan",
-    "Ethiopia", "Somalia", "Mali", "Libya", "Yemen", "Lebanon",
-    "Myanmar", "Haiti", "Congo", "Kenya", "Egypt", "Turkey",
-    "China", "Taiwan", "North Korea", "South Korea", "India",
-    "Bangladesh", "France", "Germany", "UK", "USA", "Brazil",
-    "Mexico", "Venezuela", "Colombia", "Serbia", "Kosovo"
-]
-
-# ─── STEP 5: Location Detector ───────────────────────────────────────────────
-def detect_location(text):
-    for country in COUNTRIES:
-        if country.lower() in text.lower():
-            return country
-    return "Unknown Region"
-
-# ─── STEP 6: Scrape + Filter + Save ─────────────────────────────────────────
-KEYWORDS = ["war", "attack", "protest", "violence", "conflict", "strike", "killed"]
 
 def scrape_and_save():
     conn = connect_db()
     setup_db(conn)
 
     url = "https://www.aljazeera.com/xml/rss/all.xml"
-    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
+    response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=20)
+    response.raise_for_status()
     root = ET.fromstring(response.content)
 
     print("=" * 60)
     print("AL JAZEERA — CONFLICT NEWS")
     print("=" * 60)
 
-    count       = 0
-    saved       = 0
-    skipped     = 0
+    count = 0
+    saved = 0
 
     for item in root.findall("./channel/item"):
-        title       = item.find("title").text or ""
-        link        = item.find("link").text or ""
-        date        = item.find("pubDate").text or "No date"
-        description = item.find("description").text or ""
+        title = item.findtext("title", default="")
+        link = item.findtext("link", default="")
+        date = item.findtext("pubDate", default="No date")
+        description = item.findtext("description", default="")
 
-        if any(keyword in title.lower() for keyword in KEYWORDS):
-            region = detect_location(title)
-            if region == "Unknown Region":
-                region = detect_location(description)
+        text_for_filter = f"{title} {description}".lower()
+        if not any(keyword in text_for_filter for keyword in KEYWORDS):
+            continue
 
-            count += 1
+        country = detect_country(title)
+        if country == "Unknown":
+            country = detect_country(description)
 
-            # Check if already in DB
-            with conn.cursor() as cur:
-                cur.execute("SELECT id FROM events WHERE link = %s", (link,))
-                exists = cur.fetchone()
+        region = country
+        category = detect_category(f"{title} {description}")
 
-            if exists:
-                skipped += 1
-                status = "⚠️  Already in DB"
-            else:
-                save_event(conn, title, link, date, region)
-                saved += 1
-                status = "✅ Saved"
+        save_event(conn, title, link, date, country, region, category, description)
+        count += 1
+        saved += 1
 
-            print(f"\n[{count}] {status}")
-            print(f"  Title  : {title}")
-            print(f"  Link   : {link}")
-            print(f"  Date   : {date}")
-            print(f"  Region : {region}")
-            print("-" * 60)
+        print(f"\n[{count}] ✅ Saved/updated")
+        print(f"  Country: {country}")
+        print(f"  Title  : {title}")
+        print(f"  Link   : {link}")
+        print(f"  Date   : {date}")
+        print(f"  Category: {category}")
+        print("-" * 60)
 
-    # ─── Summary ─────────────────────────────────────────────────────────────
     print(f"\n📊 SUMMARY")
-    print(f"  Total found : {count}")
-    print(f"  Saved to DB : {saved}")
-    print(f"  Duplicates  : {skipped}")
+    print(f"  Total saved/updated : {saved}")
+    print(f"  Records in this run  : {count}")
 
     conn.close()
 
-# ─── RUN ─────────────────────────────────────────────────────────────────────
-scrape_and_save()
+
+if __name__ == "__main__":
+    scrape_and_save()
