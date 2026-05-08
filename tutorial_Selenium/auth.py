@@ -9,7 +9,11 @@ from db import connect_db
 
 load_dotenv()
 
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-this-in-production")
+SECRET_KEY = os.getenv("JWT_SECRET_KEY")
+if not SECRET_KEY or len(SECRET_KEY.strip()) < 32:
+    raise RuntimeError(
+        "JWT_SECRET_KEY must be set and at least 32 characters long"
+    )
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_DAYS = 7
 
@@ -97,7 +101,7 @@ def get_user_by_id(user_id: int) -> Optional[Dict]:
                 return {
                     "id": result[0],
                     "email": result[1],
-                    "created_at": result[2],
+                    "created_at": result[2].isoformat() if result[2] else None,
                 }
     except Exception as e:
         print(f"Error getting user by ID: {e}")

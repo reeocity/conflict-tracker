@@ -158,7 +158,7 @@ def fetch_events(conn, country: Optional[str] = None):
         if country:
             cur.execute(
                 """
-                SELECT id, country, title, date, category
+                SELECT id, country, title, date, category, link
                 FROM events
                 WHERE LOWER(country) = LOWER(%s)
                 ORDER BY scraped_at DESC, id DESC;
@@ -168,7 +168,7 @@ def fetch_events(conn, country: Optional[str] = None):
         else:
             cur.execute(
                 """
-                SELECT id, country, title, date, category
+                SELECT id, country, title, date, category, link
                 FROM events
                 ORDER BY scraped_at DESC, id DESC;
                 """

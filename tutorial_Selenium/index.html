@@ -11,12 +11,28 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-start: #07111f;
+            --bg-end: #102b4f;
+            --surface: rgba(255, 255, 255, 0.86);
+            --surface-strong: #ffffff;
+            --text: #0f172a;
+            --muted: #5b6472;
+            --brand: #1d4ed8;
+            --brand-strong: #1e40af;
+            --line: rgba(148, 163, 184, 0.24);
+            --shadow: 0 18px 50px rgba(15, 23, 42, 0.16);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            color: #333;
+            font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background:
+                radial-gradient(circle at top left, rgba(59, 130, 246, 0.28), transparent 34%),
+                radial-gradient(circle at top right, rgba(14, 165, 233, 0.2), transparent 28%),
+                linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            color: var(--text);
             min-height: 100vh;
-            padding: 20px;
+            padding: 24px;
         }
 
         .container {
@@ -25,37 +41,50 @@
         }
 
         header {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.93);
+            backdrop-filter: blur(12px);
+            padding: 34px;
+            border-radius: 24px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--line);
         }
 
         h1 {
-            font-size: 32px;
-            color: #1e3c72;
-            margin-bottom: 10px;
+            font-size: clamp(2rem, 3vw, 3rem);
+            color: #0b1f44;
+            margin-bottom: 12px;
+            letter-spacing: -0.03em;
         }
 
         .subtitle {
-            font-size: 14px;
-            color: #666;
+            font-size: 15px;
+            color: var(--muted);
+            max-width: 68ch;
+            line-height: 1.6;
         }
 
         .dashboard {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
         }
 
         .stat-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            padding: 22px;
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--line);
             text-align: center;
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 24px 56px rgba(15, 23, 42, 0.18);
         }
 
         .stat-card h3 {
@@ -72,31 +101,35 @@
         }
 
         .controls {
-            background: white;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
             padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 22px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--line);
             display: flex;
-            gap: 15px;
+            gap: 14px;
             flex-wrap: wrap;
             align-items: center;
         }
 
         .preferences {
-            background: white;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
             padding: 24px;
-            border-radius: 10px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 24px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--line);
         }
 
         .auth-bar {
-            background: rgba(255, 255, 255, 0.14);
-            border: 1px solid rgba(255, 255, 255, 0.24);
+            background: rgba(15, 23, 42, 0.34);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: white;
-            padding: 14px 18px;
-            border-radius: 12px;
+            padding: 16px 18px;
+            border-radius: 18px;
             margin-bottom: 24px;
             display: flex;
             justify-content: space-between;
@@ -120,7 +153,7 @@
             gap: 8px;
             padding: 8px 12px;
             border-radius: 999px;
-            background: rgba(255, 255, 255, 0.14);
+            background: rgba(255, 255, 255, 0.12);
             font-size: 13px;
         }
 
@@ -146,7 +179,7 @@
         .auth-card {
             width: min(560px, 100%);
             background: white;
-            border-radius: 18px;
+            border-radius: 24px;
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
             overflow: hidden;
         }
@@ -215,9 +248,9 @@
 
         .pref-panel {
             border: 1px solid #e5e7eb;
-            border-radius: 10px;
+            border-radius: 18px;
             padding: 18px;
-            background: #f8fafc;
+            background: linear-gradient(180deg, #f8fafc 0%, #ffffff 100%);
         }
 
         .pref-panel h3 {
@@ -275,12 +308,22 @@
         }
 
         .secondary-button {
-            background: #e5e7eb;
-            color: #111827;
+            background: #e2e8f0;
+            color: #0f172a;
         }
 
         .secondary-button:hover {
-            background: #d1d5db;
+            background: #cbd5e1;
+        }
+
+        .ghost-button {
+            background: rgba(29, 78, 216, 0.08);
+            color: var(--brand-strong);
+            border: 1px solid rgba(29, 78, 216, 0.14);
+        }
+
+        .ghost-button:hover {
+            background: rgba(29, 78, 216, 0.12);
         }
 
         .status-line {
@@ -294,71 +337,88 @@
         }
 
         input, select {
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+            padding: 12px 14px;
+            border: 1px solid #dbe2ea;
+            border-radius: 14px;
             font-size: 14px;
             min-width: 200px;
+            background: rgba(255, 255, 255, 0.95);
         }
 
         button {
-            padding: 10px 20px;
-            background: #1e3c72;
+            padding: 11px 18px;
+            background: linear-gradient(135deg, var(--brand) 0%, var(--brand-strong) 100%);
             color: white;
             border: none;
-            border-radius: 5px;
+            border-radius: 14px;
             cursor: pointer;
             font-weight: 500;
-            transition: background 0.3s;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.18);
         }
 
         button:hover {
-            background: #2a5298;
+            transform: translateY(-1px);
+            opacity: 0.98;
         }
 
         .events-container {
             display: grid;
-            gap: 20px;
+            gap: 18px;
         }
 
         .event-card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-left: 5px solid #1e3c72;
-            transition: transform 0.3s, box-shadow 0.3s;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(12px);
+            padding: 22px;
+            border-radius: 22px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--line);
+            border-top: 5px solid rgba(29, 78, 216, 0.72);
+            transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease;
         }
 
         .event-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 28px 60px rgba(15, 23, 42, 0.18);
+            border-color: rgba(59, 130, 246, 0.28);
         }
 
         .event-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
-            margin-bottom: 10px;
+            gap: 16px;
+            margin-bottom: 14px;
+            flex-wrap: wrap;
+        }
+
+        .event-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
         }
 
         .event-country {
             display: inline-block;
-            background: #1e3c72;
+            background: #0f172a;
             color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 999px;
             font-size: 12px;
-            font-weight: 500;
+            font-weight: 700;
+            letter-spacing: 0.02em;
         }
 
         .event-category {
             display: inline-block;
-            padding: 5px 12px;
-            border-radius: 20px;
+            padding: 6px 12px;
+            border-radius: 999px;
             font-size: 12px;
-            font-weight: 500;
-            margin-left: 10px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
         }
 
         .category-conflict {
@@ -377,16 +437,36 @@
         }
 
         .event-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1e3c72;
-            margin-bottom: 10px;
+            font-size: 19px;
+            font-weight: 700;
+            line-height: 1.35;
+            color: #0f172a;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
         }
 
         .event-date {
             font-size: 12px;
-            color: #999;
-            margin-bottom: 10px;
+            color: #64748b;
+            margin-bottom: 14px;
+        }
+
+        .event-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .event-note {
+            font-size: 12px;
+            color: #64748b;
+            line-height: 1.4;
+        }
+
+        .event-note strong {
+            color: #0f172a;
         }
 
         .event-link {
@@ -469,7 +549,67 @@
                 min-width: unset;
             }
         }
+
+        #map-container {
+            background: rgba(255, 255, 255, 0.93);
+            backdrop-filter: blur(12px);
+            padding: 0;
+            border-radius: 24px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--line);
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+            z-index: 1;
+        }
+
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 13px;
+            z-index: 1000;
+        }
+
+        .map-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .map-legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .legend-label {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        @media (max-width: 768px) {
+            #map {
+                height: 350px;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -480,7 +620,7 @@
 
         <div class="auth-bar" id="auth-bar">
             <div class="auth-text">
-                <strong>Notifications require an account.</strong> Sign in or create an account to save country/category alerts and receive browser prompts for new events.
+                <strong>Notifications require an account.</strong> Sign in to save alert preferences and receive browser prompts for new events.
             </div>
             <div class="auth-pill" id="auth-pill"><span>Signed out</span> Alerts hidden</div>
             <button id="open-auth">Sign in / Register</button>
@@ -519,9 +659,27 @@
             <button onclick="fetchAndDisplay()">🔄 Refresh</button>
         </div>
 
+        <div id="map-container">
+            <div id="map"></div>
+            <div class="map-legend">
+                <div class="map-legend-item">
+                    <div class="legend-color" style="background: #ff4444;"></div>
+                    <span class="legend-label">Conflict</span>
+                </div>
+                <div class="map-legend-item">
+                    <div class="legend-color" style="background: #ffaa00;"></div>
+                    <span class="legend-label">Protest</span>
+                </div>
+                <div class="map-legend-item">
+                    <div class="legend-color" style="background: #cc1111;"></div>
+                    <span class="legend-label">Violence</span>
+                </div>
+            </div>
+        </div>
+
         <section class="preferences auth-hidden" id="preferences-section">
             <h2 style="color:#1e3c72; font-size:20px;">Account & Alerts</h2>
-            <p class="subtitle">Users can store alert preferences here. Email is saved locally for now; browser notifications are requested from the page.</p>
+            <p class="subtitle">Manage your alert preferences here. Changes sync to your account and browser notification permission is requested on demand.</p>
 
             <div class="preferences-grid">
                 <div class="pref-panel">
@@ -547,12 +705,12 @@
                         <button id="enable-notifications" class="secondary-button">Enable browser notifications</button>
                     </div>
                     <div class="status-line" id="preferences-status">No alert profile saved yet.</div>
-                    <p class="pref-note">This panel appears only after sign in. Email delivery still needs a backend mail service and user table.</p>
+                    <p class="pref-note">Preferences are saved to your account and used to match incoming events.</p>
                 </div>
 
                 <div class="pref-panel">
                     <h3>How notifications work</h3>
-                    <div class="status-line"><strong>Browser notifications:</strong> the page asks permission after you click enable.</div>
+                    <div class="status-line"><strong>Browser notifications:</strong> click enable to grant permission in your browser.</div>
                     <div class="status-line"><strong>Email alerts:</strong> preference stored now; delivery later needs backend SMTP or an email provider.</div>
                     <div class="status-line"><strong>Matching rules:</strong> only selected countries/categories trigger alerts.</div>
                     <div class="status-line"><strong>Saved locally:</strong> the alert profile is stored in your browser so it persists when you reopen the page.</div>
@@ -577,7 +735,7 @@
         <div class="auth-card">
             <header>
                 <h2>Sign in to manage alerts</h2>
-                <p>Sign in or create an account to unlock country and category notifications.</p>
+                <p>Sign in or create an account to unlock country and category alerts.</p>
             </header>
             <div class="auth-card-body">
                 <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
@@ -610,6 +768,7 @@
         const PREF_KEY = 'conflict-tracker-alerts';
         let authMode = 'signin';
         let lastEventIds = new Set();
+        let pendingAlertRequest = null;
 
         function loadAuth() {
             try {
@@ -762,11 +921,35 @@
 
         function requireAuth() {
             const auth = loadAuth();
-            if (!auth.signedIn) {
+            if (!auth.token || !auth.user) {
                 openAuthModal('register');
                 return false;
             }
             return true;
+        }
+
+        async function validateStoredAuth() {
+            const auth = loadAuth();
+            if (!auth.token || !auth.user) {
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/me`, {
+                    headers: getAuthHeaders()
+                });
+
+                if (response.ok) {
+                    const currentUser = await response.json();
+                    saveAuth({ token: auth.token, user: currentUser });
+                    return true;
+                }
+            } catch {
+                // fall through to clear invalid auth
+            }
+
+            saveAuth({ token: null, user: null });
+            return false;
         }
 
         function updatePreferencesStatus(preferences) {
@@ -799,7 +982,101 @@
             return matchesCategory && matchesCountry;
         }
 
-        function notifyNewEvents(events) {
+        async function requestBrowserNotifications() {
+            if (!('Notification' in window)) {
+                alert('This browser does not support notifications.');
+                return false;
+            }
+
+            if (Notification.permission === 'granted') {
+                return true;
+            }
+
+            const permission = await Notification.requestPermission();
+            return permission === 'granted';
+        }
+
+        function showContextNotification(country, category, headline) {
+            if (!('Notification' in window) || Notification.permission !== 'granted') {
+                return;
+            }
+
+            const title = `${country} · ${category}`;
+            const body = headline
+                ? `You will be notified about events like: ${headline}`
+                : `You will be notified about ${category} events in ${country}.`;
+
+            new Notification(title, {
+                body,
+                icon: 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22%3E%3Ctext y=%2250%22 font-size=%2248%22%3E%F0%9F%8C%8D%3C/text%3E%3C/svg%3E'
+            });
+        }
+
+        async function saveAlertTarget(country, category) {
+            const auth = loadAuth();
+            if (!auth.token || !auth.user) {
+                return false;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/auth/subscriptions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeaders()
+                    },
+                    body: JSON.stringify({ country, category })
+                });
+                return response.ok;
+            } catch (error) {
+                console.warn('Failed to save alert target:', error);
+                return false;
+            }
+        }
+
+        async function setUpAlertTarget(country, category, headline) {
+            const auth = loadAuth();
+            if (!auth.token || !auth.user) {
+                pendingAlertRequest = { country, category, headline };
+                openAuthModal('register');
+                document.getElementById('auth-note').textContent = `Sign in to get alerts for ${country} / ${category}.`;
+                return;
+            }
+
+            await saveAlertTarget(country, category);
+
+            const preferences = loadPreferences();
+            const countries = new Set(
+                (preferences.countries || '')
+                    .split(',')
+                    .map(item => item.trim())
+                    .filter(Boolean)
+            );
+            countries.add(country);
+            if (!preferences.categories.includes(category)) {
+                preferences.categories = [...preferences.categories, category];
+            }
+            preferences.countries = Array.from(countries).join(', ');
+            preferences.email = auth.user.email;
+            savePreferences(preferences);
+
+            const permissionGranted = await requestBrowserNotifications();
+            preferences.browserNotifications = permissionGranted;
+            savePreferences(preferences);
+
+            updatePreferencesStatus(preferences);
+            syncPreferencesUI();
+
+            if (permissionGranted) {
+                showContextNotification(country, category, headline);
+            }
+
+            const preferencesSection = document.getElementById('preferences-section');
+            preferencesSection.classList.remove('auth-hidden');
+            preferencesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function notifyNewEvents(events, previousEventIds) {
             const preferences = loadPreferences();
             const auth = loadAuth();
             if (!auth.token) {
@@ -809,7 +1086,12 @@
                 return;
             }
 
-            const newMatches = events.filter(eventItem => !lastEventIds.has(String(eventItem.id)) && matchesPreferences(eventItem, preferences));
+            // Skip notification blast on the first full load.
+            if (!previousEventIds || previousEventIds.size === 0) {
+                return;
+            }
+
+            const newMatches = events.filter(eventItem => !previousEventIds.has(String(eventItem.id)) && matchesPreferences(eventItem, preferences));
             if (!newMatches.length) {
                 return;
             }
@@ -850,7 +1132,7 @@
                     headers: getAuthHeaders()
                 });
                 const events = await response.json();
-                lastEventIds = new Set(events.map(eventItem => String(eventItem.id)));
+                const previousEventIds = new Set(lastEventIds);
 
                 // Apply filters
                 const searchQuery = document.getElementById('search').value.toLowerCase();
@@ -866,7 +1148,8 @@
 
                 // Update stats
                 updateStats(events);
-                notifyNewEvents(events);
+                notifyNewEvents(events, previousEventIds);
+                lastEventIds = new Set(events.map(eventItem => String(eventItem.id)));
 
                 // Display events
                 if (filtered.length === 0) {
@@ -880,20 +1163,24 @@
                     document.getElementById('events').innerHTML = filtered.map(e => `
                         <div class="event-card">
                             <div class="event-header">
-                                <div>
+                                <div class="event-meta">
                                     <span class="event-country">${e.country}</span>
                                     <span class="event-category category-${e.category}">${e.category}</span>
                                 </div>
                                 <button
                                     type="button"
-                                    class="secondary-button notify-event-btn"
+                                    class="ghost-button notify-event-btn"
                                     data-country="${e.country}"
                                     data-category="${e.category}"
                                     data-headline="${e.headline.replace(/"/g, '&quot;')}"
                                 >Get notified like this</button>
                             </div>
                             <div class="event-title">${e.headline}</div>
-                            <div class="event-date">📅 ${new Date(e.date).toLocaleDateString()}</div>
+                            <div class="event-actions">
+                                <div class="event-date">📅 ${new Date(e.date).toLocaleDateString()}</div>
+                                <div class="event-note">Follow <strong>${e.country}</strong> or <strong>${e.category}</strong> events with one click.</div>
+                            </div>
+                            ${e.link ? `<a class="event-link" href="${e.link}" target="_blank" rel="noopener noreferrer">Read full article</a>` : ''}
                         </div>
                     `).join('');
                 }
@@ -925,17 +1212,12 @@
                 return;
             }
 
-            if (!('Notification' in window)) {
-                alert('This browser does not support notifications.');
-                return;
-            }
-
-            const permission = await Notification.requestPermission();
+            const permissionGranted = await requestBrowserNotifications();
             const preferences = loadPreferences();
-            preferences.browserNotifications = permission === 'granted';
+            preferences.browserNotifications = permissionGranted;
             savePreferences(preferences);
             updatePreferencesStatus(preferences);
-            if (permission === 'granted') {
+            if (permissionGranted) {
                 new Notification('Conflict Tracker', { body: 'Browser notifications are now enabled for your saved alerts.' });
             }
         }
@@ -978,41 +1260,8 @@
             updatePreferencesStatus(preferences);
         }
 
-        function prefillAlertPreferences(country, category) {
-            const current = loadPreferences();
-            if (country) {
-                const countries = new Set(
-                    (current.countries || '')
-                        .split(',')
-                        .map(item => item.trim())
-                        .filter(Boolean)
-                );
-                countries.add(country);
-                current.countries = Array.from(countries).join(', ');
-            }
-            if (category && !current.categories.includes(category)) {
-                current.categories = [...current.categories, category];
-            }
-            savePreferences(current);
-            syncPreferencesUI();
-        }
-
         function openEventAlertFlow(country, category, headline) {
-            const auth = loadAuth();
-            if (!auth.token) {
-                openAuthModal('register');
-                document.getElementById('auth-note').textContent = `Create an account to get alerts for ${country} / ${category}.`;
-                return;
-            }
-
-            prefillAlertPreferences(country, category);
-            const preferencesSection = document.getElementById('preferences-section');
-            preferencesSection.classList.remove('auth-hidden');
-            preferencesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            document.getElementById('preferences-status').innerHTML = `<strong>Email:</strong> ${loadPreferences().email || 'saved'} | <strong>Countries:</strong> ${country} | <strong>Categories:</strong> ${category} | <strong>Browser notifications:</strong> ${loadPreferences().browserNotifications ? 'enabled' : 'disabled'}`;
-            if (headline) {
-                document.getElementById('preferences-status').innerHTML += `<br><strong>Alerting for:</strong> ${headline}`;
-            }
+            setUpAlertTarget(country, category, headline);
         }
 
         async function handleAuthSubmit(event) {
@@ -1045,6 +1294,11 @@
                     closeAuthModal();
                     document.getElementById('auth-email').value = '';
                     document.getElementById('auth-password').value = '';
+                    if (pendingAlertRequest) {
+                        const nextAlert = pendingAlertRequest;
+                        pendingAlertRequest = null;
+                        await setUpAlertTarget(nextAlert.country, nextAlert.category, nextAlert.headline);
+                    }
                     fetchAndDisplay();
                 } else {
                     const error = await response.json();
@@ -1089,14 +1343,249 @@
             input.addEventListener('change', persistPreferencesFromForm);
         });
 
-        // Initial load
-        syncAuthUI();
-        syncPreferencesUI();
-        checkApiStatus();
-        fetchAndDisplay();
+        // Country coordinates for map markers
+        const countryCoordinates = {
+            "Ukraine": [48.3794, 31.1656],
+            "Russia": [61.524, 105.3188],
+            "Israel": [31.0461, 34.8516],
+            "Palestine": [31.9454, 35.2338],
+            "Gaza": [31.9254, 35.2281],
+            "Sudan": [12.8628, 30.2176],
+            "Syria": [34.8021, 38.9968],
+            "Iraq": [33.3128, 44.3615],
+            "Iran": [32.4279, 53.6880],
+            "Afghanistan": [33.9391, 67.3099],
+            "Pakistan": [30.3753, 69.3451],
+            "Ethiopia": [9.1450, 40.4897],
+            "Somalia": [5.0269, 46.1996],
+            "Mali": [17.5707, -3.9962],
+            "Libya": [26.3351, 17.2283],
+            "Yemen": [15.5527, 48.5164],
+            "Lebanon": [33.8547, 35.8623],
+            "Myanmar": [21.9162, 95.9560],
+            "Haiti": [18.9712, -72.2852],
+            "Congo": [-4.0383, 21.7587],
+            "Kenya": [-0.0236, 37.9062],
+            "Egypt": [26.8206, 30.8025],
+            "Turkey": [38.9637, 35.2433],
+            "China": [35.8617, 104.1954],
+            "Taiwan": [23.6978, 120.9605],
+            "North Korea": [40.3399, 127.5101],
+            "South Korea": [35.9078, 127.7669],
+            "India": [20.5937, 78.9629],
+            "Bangladesh": [23.6850, 90.3563],
+            "France": [46.2276, 2.2137],
+            "Germany": [51.1657, 10.4515],
+            "UK": [55.3781, -3.4360],
+            "USA": [37.0902, -95.7129],
+            "Brazil": [-14.2350, -51.9253],
+            "Mexico": [23.6345, -102.5528],
+            "Venezuela": [6.4238, -66.5897],
+            "Colombia": [4.5709, -74.2973],
+            "Serbia": [44.0165, 21.0059],
+            "Kosovo": [42.6026, 21.1787],
+            "Nigeria": [9.0820, 8.6753],
+            "Unknown": [20, 0]
+        };
 
-        // Auto-refresh every 30 seconds
-        setInterval(fetchAndDisplay, 30000);
+        let mapInstance = null;
+        let markers = [];
+
+        function initMap() {
+            if (mapInstance) return;
+            
+            // Initialize map centered on world view
+            mapInstance = L.map('map').setView([20, 0], 2);
+            
+            // Add tile layer from OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19,
+                fadeAnimation: true
+            }).addTo(mapInstance);
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                'conflict': '#ff4444',
+                'protest': '#ffaa00',
+                'violence': '#cc1111'
+            };
+            return colors[category] || '#666666';
+        }
+
+        function updateMapMarkers(events) {
+            if (!mapInstance) {
+                initMap();
+            }
+
+            // Clear existing markers
+            markers.forEach(marker => mapInstance.removeLayer(marker));
+            markers = [];
+
+            // Group events by country to count
+            const eventsByCountry = {};
+            events.forEach(event => {
+                if (!eventsByCountry[event.country]) {
+                    eventsByCountry[event.country] = [];
+                }
+                eventsByCountry[event.country].push(event);
+            });
+
+            // Add markers for each country
+            Object.entries(eventsByCountry).forEach(([country, countryEvents]) => {
+                const coords = countryCoordinates[country] || countryCoordinates["Unknown"];
+                
+                // Determine marker color based on most severe category in this country
+                let markerColor = '#666666';
+                if (countryEvents.some(e => e.category === 'violence')) {
+                    markerColor = getCategoryColor('violence');
+                } else if (countryEvents.some(e => e.category === 'conflict')) {
+                    markerColor = getCategoryColor('conflict');
+                } else if (countryEvents.some(e => e.category === 'protest')) {
+                    markerColor = getCategoryColor('protest');
+                }
+
+                // Create custom icon
+                const iconHtml = `
+                    <div style="
+                        background-color: ${markerColor};
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border: 3px solid white;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        color: white;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">${countryEvents.length}</div>
+                `;
+
+                const customIcon = L.divIcon({
+                    html: iconHtml,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
+                    popupAnchor: [0, -16],
+                    className: 'custom-marker'
+                });
+
+                // Create popup content
+                const popupContent = `
+                    <div style="font-size: 13px; max-width: 280px;">
+                        <strong>${country}</strong><br>
+                        ${countryEvents.length} event${countryEvents.length !== 1 ? 's' : ''}<br>
+                        <div style="margin-top: 8px; font-size: 11px;">
+                            ${countryEvents.slice(0, 2).map(e => `
+                                <div style="margin: 4px 0; padding: 4px; background: #f5f5f5; border-radius: 4px;">
+                                    <strong>${e.category}</strong>: ${e.headline.substring(0, 45)}...
+                                </div>
+                            `).join('')}
+                            ${countryEvents.length > 2 ? `<div style="margin-top: 4px; color: #999;">+${countryEvents.length - 2} more</div>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                const marker = L.marker(coords, { icon: customIcon })
+                    .bindPopup(popupContent, { maxWidth: 300 })
+                    .addTo(mapInstance);
+                
+                markers.push(marker);
+            });
+        }
+
+        // Update map whenever events are displayed
+        async function fetchAndDisplayWithMap() {
+            const isOnline = await checkApiStatus();
+            if (!isOnline) {
+                showError('⚠️ Cannot connect to backend. Make sure FastAPI is running on http://localhost:8000');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/news`, {
+                    headers: getAuthHeaders()
+                });
+                const events = await response.json();
+                const previousEventIds = new Set(lastEventIds);
+
+                // Update map with all events
+                updateMapMarkers(events);
+
+                // Apply filters
+                const searchQuery = document.getElementById('search').value.toLowerCase();
+                const categoryFilter = document.getElementById('category-filter').value;
+
+                let filtered = events.filter(e => {
+                    const matchSearch = !searchQuery || 
+                        e.country.toLowerCase().includes(searchQuery) ||
+                        e.headline.toLowerCase().includes(searchQuery);
+                    const matchCategory = !categoryFilter || e.category === categoryFilter;
+                    return matchSearch && matchCategory;
+                });
+
+                // Update stats
+                updateStats(events);
+                notifyNewEvents(events, previousEventIds);
+                lastEventIds = new Set(events.map(eventItem => String(eventItem.id)));
+
+                // Display events
+                if (filtered.length === 0) {
+                    document.getElementById('events').innerHTML = `
+                        <div class="empty-state">
+                            <h2>No events found</h2>
+                            <p>Try adjusting your filters or search terms</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('events').innerHTML = filtered.map(e => `
+                        <div class="event-card">
+                            <div class="event-header">
+                                <div class="event-meta">
+                                    <span class="event-country">${e.country}</span>
+                                    <span class="event-category category-${e.category}">${e.category}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="ghost-button notify-event-btn"
+                                    data-country="${e.country}"
+                                    data-category="${e.category}"
+                                    data-headline="${e.headline.replace(/"/g, '&quot;')}"
+                                >Get notified like this</button>
+                            </div>
+                            <div class="event-title">${e.headline}</div>
+                            <div class="event-actions">
+                                <div class="event-date">📅 ${new Date(e.date).toLocaleDateString()}</div>
+                                <div class="event-note">Follow <strong>${e.country}</strong> or <strong>${e.category}</strong> events with one click.</div>
+                            </div>
+                            ${e.link ? `<a class="event-link" href="${e.link}" target="_blank" rel="noopener noreferrer">Read full article</a>` : ''}
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                showError(`Error fetching events: ${error.message}`);
+            }
+        }
+
+        // Replace the original fetchAndDisplay with map-aware version
+        const originalFetchAndDisplay = fetchAndDisplay;
+        fetchAndDisplay = fetchAndDisplayWithMap;
+
+        async function initializeApp() {
+            await validateStoredAuth();
+            syncAuthUI();
+            await syncPreferencesUI();
+            await checkApiStatus();
+            initMap();
+            await fetchAndDisplay();
+
+            // Auto-refresh every 30 seconds
+            setInterval(fetchAndDisplay, 30000);
+        }
+
+        initializeApp();
     </script>
 </body>
 </html>
