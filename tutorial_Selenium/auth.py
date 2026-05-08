@@ -101,7 +101,7 @@ def get_user_by_id(user_id: int) -> Optional[Dict]:
                 return {
                     "id": result[0],
                     "email": result[1],
-                    "created_at": result[2],
+                    "created_at": result[2].isoformat() if result[2] else None,
                 }
     except Exception as e:
         print(f"Error getting user by ID: {e}")

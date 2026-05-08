@@ -5,8 +5,11 @@ from fastapi.responses import FileResponse
 from typing import List
 from pydantic import BaseModel
 import os
+import threading
+import time
 
 from db import connect_db, fetch_events, fetch_stats, setup_db, setup_auth_db
+from sql import scrape_and_save
 from routes.auth import router as auth_router
 
 app = FastAPI(title="Conflict News API")
@@ -26,6 +29,22 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 # ─── Register routes ───────────────────────────────────────────────────────────
 app.include_router(auth_router)
 
+SCRAPE_INTERVAL_SECONDS = 30 * 60
+_scrape_scheduler_started = False
+
+
+def run_scraper_once() -> None:
+    try:
+        scrape_and_save()
+    except Exception as exc:
+        print(f"Scraper run failed: {exc}")
+
+
+def scraper_scheduler() -> None:
+    while True:
+        run_scraper_once()
+        time.sleep(SCRAPE_INTERVAL_SECONDS)
+
 # ─── Startup event ────────────────────────────────────────────────────────────
 @app.on_event("startup")
 async def startup_event():
@@ -40,6 +59,11 @@ async def startup_event():
     except Exception as e:
         print(f"Database initialization warning: {e}")
 
+    global _scrape_scheduler_started
+    if not _scrape_scheduler_started:
+        _scrape_scheduler_started = True
+        threading.Thread(target=scraper_scheduler, daemon=True).start()
+
 # ─── Data Model ───────────────────────────────────────────────────────────────
 class NewsItem(BaseModel):
     id: int
@@ -47,19 +71,20 @@ class NewsItem(BaseModel):
     headline: str
     date: str
     category: str
+    link: str = ""
 
 # ─── Sample Data ──────────────────────────────────────────────────────────────
 SAMPLE_NEWS: List[NewsItem] = [
-    NewsItem(id=1, country="Ukraine",     headline="Explosion reported in Kyiv near government district",       date="2026-05-04", category="conflict"),
-    NewsItem(id=2, country="Nigeria",     headline="Protest in Lagos over fuel subsidy removal turns violent",  date="2026-05-04", category="protest"),
-    NewsItem(id=3, country="Sudan",       headline="Armed attack on refugee camp kills dozens in Darfur",       date="2026-05-03", category="conflict"),
-    NewsItem(id=4, country="Gaza",        headline="Airstrikes hit residential area overnight",                 date="2026-05-04", category="conflict"),
-    NewsItem(id=5, country="Myanmar",     headline="Military strikes villages in Sagaing region",              date="2026-05-03", category="conflict"),
-    NewsItem(id=6, country="Haiti",       headline="Gang violence forces thousands to flee Port-au-Prince",    date="2026-05-02", category="violence"),
-    NewsItem(id=7, country="Ethiopia",    headline="Clashes resume in Amhara region despite ceasefire",        date="2026-05-04", category="conflict"),
-    NewsItem(id=8, country="Yemen",       headline="Coalition airstrike targets Houthi weapons depot",         date="2026-05-03", category="conflict"),
-    NewsItem(id=9, country="Iran",        headline="Protest spreads to five cities after student crackdown",   date="2026-05-04", category="protest"),
-    NewsItem(id=10, country="Colombia",   headline="Armed group attacks military convoy in Cauca",             date="2026-05-02", category="conflict"),
+    NewsItem(id=1, country="Ukraine",     headline="Explosion reported in Kyiv near government district",       date="2026-05-04", category="conflict", link=""),
+    NewsItem(id=2, country="Nigeria",     headline="Protest in Lagos over fuel subsidy removal turns violent",  date="2026-05-04", category="protest", link=""),
+    NewsItem(id=3, country="Sudan",       headline="Armed attack on refugee camp kills dozens in Darfur",       date="2026-05-03", category="conflict", link=""),
+    NewsItem(id=4, country="Gaza",        headline="Airstrikes hit residential area overnight",                 date="2026-05-04", category="conflict", link=""),
+    NewsItem(id=5, country="Myanmar",     headline="Military strikes villages in Sagaing region",              date="2026-05-03", category="conflict", link=""),
+    NewsItem(id=6, country="Haiti",       headline="Gang violence forces thousands to flee Port-au-Prince",    date="2026-05-02", category="violence", link=""),
+    NewsItem(id=7, country="Ethiopia",    headline="Clashes resume in Amhara region despite ceasefire",        date="2026-05-04", category="conflict", link=""),
+    NewsItem(id=8, country="Yemen",       headline="Coalition airstrike targets Houthi weapons depot",         date="2026-05-03", category="conflict", link=""),
+    NewsItem(id=9, country="Iran",        headline="Protest spreads to five cities after student crackdown",   date="2026-05-04", category="protest", link=""),
+    NewsItem(id=10, country="Colombia",   headline="Armed group attacks military convoy in Cauca",             date="2026-05-02", category="conflict", link=""),
 ]
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
@@ -82,6 +107,7 @@ def get_news():
                         headline=row[2],
                         date=row[3] or "",
                         category=row[4] or "general",
+                        link=row[5] or "",
                     )
                     for row in rows
                 ]
@@ -106,6 +132,7 @@ def get_news_by_country(country: str):
                         headline=row[2],
                         date=row[3] or "",
                         category=row[4] or "general",
+                        link=row[5] or "",
                     )
                     for row in rows
                 ]
