@@ -29,7 +29,7 @@ app.mount("/static", StaticFiles(directory=static_path), name="static")
 # ─── Register routes ───────────────────────────────────────────────────────────
 app.include_router(auth_router)
 
-SCRAPE_INTERVAL_SECONDS = 30 * 60
+SCRAPE_INTERVAL_SECONDS = int(os.getenv("SCRAPE_INTERVAL_SECONDS", str(30 * 60)))
 _scrape_scheduler_started = False
 
 
