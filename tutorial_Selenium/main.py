@@ -65,7 +65,7 @@ SAMPLE_NEWS: List[NewsItem] = [
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 @app.get("/")
 def root():
-    frontend = os.path.join(os.path.dirname(__file__), "..", "frontend", "index.html")
+    frontend = os.path.join(os.path.dirname(__file__), "index.html")
     return FileResponse(frontend)
 
 @app.get("/api/news", response_model=List[NewsItem])

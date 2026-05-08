@@ -549,7 +549,67 @@
                 min-width: unset;
             }
         }
+
+        #map-container {
+            background: rgba(255, 255, 255, 0.93);
+            backdrop-filter: blur(12px);
+            padding: 0;
+            border-radius: 24px;
+            margin-bottom: 28px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--line);
+            overflow: hidden;
+        }
+
+        #map {
+            width: 100%;
+            height: 500px;
+            z-index: 1;
+        }
+
+        .map-legend {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            font-size: 13px;
+            z-index: 1000;
+        }
+
+        .map-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .map-legend-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .legend-color {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .legend-label {
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        @media (max-width: 768px) {
+            #map {
+                height: 350px;
+            }
+        }
     </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -597,6 +657,24 @@
                 <option value="violence">Violence</option>
             </select>
             <button onclick="fetchAndDisplay()">🔄 Refresh</button>
+        </div>
+
+        <div id="map-container">
+            <div id="map"></div>
+            <div class="map-legend">
+                <div class="map-legend-item">
+                    <div class="legend-color" style="background: #ff4444;"></div>
+                    <span class="legend-label">Conflict</span>
+                </div>
+                <div class="map-legend-item">
+                    <div class="legend-color" style="background: #ffaa00;"></div>
+                    <span class="legend-label">Protest</span>
+                </div>
+                <div class="map-legend-item">
+                    <div class="legend-color" style="background: #cc1111;"></div>
+                    <span class="legend-label">Violence</span>
+                </div>
+            </div>
         </div>
 
         <section class="preferences auth-hidden" id="preferences-section">
@@ -1258,11 +1336,240 @@
             input.addEventListener('change', persistPreferencesFromForm);
         });
 
+        // Country coordinates for map markers
+        const countryCoordinates = {
+            "Ukraine": [48.3794, 31.1656],
+            "Russia": [61.524, 105.3188],
+            "Israel": [31.0461, 34.8516],
+            "Palestine": [31.9454, 35.2338],
+            "Gaza": [31.9254, 35.2281],
+            "Sudan": [12.8628, 30.2176],
+            "Syria": [34.8021, 38.9968],
+            "Iraq": [33.3128, 44.3615],
+            "Iran": [32.4279, 53.6880],
+            "Afghanistan": [33.9391, 67.3099],
+            "Pakistan": [30.3753, 69.3451],
+            "Ethiopia": [9.1450, 40.4897],
+            "Somalia": [5.0269, 46.1996],
+            "Mali": [17.5707, -3.9962],
+            "Libya": [26.3351, 17.2283],
+            "Yemen": [15.5527, 48.5164],
+            "Lebanon": [33.8547, 35.8623],
+            "Myanmar": [21.9162, 95.9560],
+            "Haiti": [18.9712, -72.2852],
+            "Congo": [-4.0383, 21.7587],
+            "Kenya": [-0.0236, 37.9062],
+            "Egypt": [26.8206, 30.8025],
+            "Turkey": [38.9637, 35.2433],
+            "China": [35.8617, 104.1954],
+            "Taiwan": [23.6978, 120.9605],
+            "North Korea": [40.3399, 127.5101],
+            "South Korea": [35.9078, 127.7669],
+            "India": [20.5937, 78.9629],
+            "Bangladesh": [23.6850, 90.3563],
+            "France": [46.2276, 2.2137],
+            "Germany": [51.1657, 10.4515],
+            "UK": [55.3781, -3.4360],
+            "USA": [37.0902, -95.7129],
+            "Brazil": [-14.2350, -51.9253],
+            "Mexico": [23.6345, -102.5528],
+            "Venezuela": [6.4238, -66.5897],
+            "Colombia": [4.5709, -74.2973],
+            "Serbia": [44.0165, 21.0059],
+            "Kosovo": [42.6026, 21.1787],
+            "Nigeria": [9.0820, 8.6753],
+            "Unknown": [20, 0]
+        };
+
+        let mapInstance = null;
+        let markers = [];
+
+        function initMap() {
+            if (mapInstance) return;
+            
+            // Initialize map centered on world view
+            mapInstance = L.map('map').setView([20, 0], 2);
+            
+            // Add tile layer from OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors',
+                maxZoom: 19,
+                fadeAnimation: true
+            }).addTo(mapInstance);
+        }
+
+        function getCategoryColor(category) {
+            const colors = {
+                'conflict': '#ff4444',
+                'protest': '#ffaa00',
+                'violence': '#cc1111'
+            };
+            return colors[category] || '#666666';
+        }
+
+        function updateMapMarkers(events) {
+            if (!mapInstance) {
+                initMap();
+            }
+
+            // Clear existing markers
+            markers.forEach(marker => mapInstance.removeLayer(marker));
+            markers = [];
+
+            // Group events by country to count
+            const eventsByCountry = {};
+            events.forEach(event => {
+                if (!eventsByCountry[event.country]) {
+                    eventsByCountry[event.country] = [];
+                }
+                eventsByCountry[event.country].push(event);
+            });
+
+            // Add markers for each country
+            Object.entries(eventsByCountry).forEach(([country, countryEvents]) => {
+                const coords = countryCoordinates[country] || countryCoordinates["Unknown"];
+                
+                // Determine marker color based on most severe category in this country
+                let markerColor = '#666666';
+                if (countryEvents.some(e => e.category === 'violence')) {
+                    markerColor = getCategoryColor('violence');
+                } else if (countryEvents.some(e => e.category === 'conflict')) {
+                    markerColor = getCategoryColor('conflict');
+                } else if (countryEvents.some(e => e.category === 'protest')) {
+                    markerColor = getCategoryColor('protest');
+                }
+
+                // Create custom icon
+                const iconHtml = `
+                    <div style="
+                        background-color: ${markerColor};
+                        width: 32px;
+                        height: 32px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        border: 3px solid white;
+                        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+                        color: white;
+                        font-weight: bold;
+                        font-size: 14px;
+                    ">${countryEvents.length}</div>
+                `;
+
+                const customIcon = L.divIcon({
+                    html: iconHtml,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 16],
+                    popupAnchor: [0, -16],
+                    className: 'custom-marker'
+                });
+
+                // Create popup content
+                const popupContent = `
+                    <div style="font-size: 13px; max-width: 280px;">
+                        <strong>${country}</strong><br>
+                        ${countryEvents.length} event${countryEvents.length !== 1 ? 's' : ''}<br>
+                        <div style="margin-top: 8px; font-size: 11px;">
+                            ${countryEvents.slice(0, 2).map(e => `
+                                <div style="margin: 4px 0; padding: 4px; background: #f5f5f5; border-radius: 4px;">
+                                    <strong>${e.category}</strong>: ${e.headline.substring(0, 45)}...
+                                </div>
+                            `).join('')}
+                            ${countryEvents.length > 2 ? `<div style="margin-top: 4px; color: #999;">+${countryEvents.length - 2} more</div>` : ''}
+                        </div>
+                    </div>
+                `;
+
+                const marker = L.marker(coords, { icon: customIcon })
+                    .bindPopup(popupContent, { maxWidth: 300 })
+                    .addTo(mapInstance);
+                
+                markers.push(marker);
+            });
+        }
+
+        // Update map whenever events are displayed
+        async function fetchAndDisplayWithMap() {
+            const isOnline = await checkApiStatus();
+            if (!isOnline) {
+                showError('⚠️ Cannot connect to backend. Make sure FastAPI is running on http://localhost:8000');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/news`, {
+                    headers: getAuthHeaders()
+                });
+                const events = await response.json();
+                lastEventIds = new Set(events.map(eventItem => String(eventItem.id)));
+
+                // Update map with all events
+                updateMapMarkers(events);
+
+                // Apply filters
+                const searchQuery = document.getElementById('search').value.toLowerCase();
+                const categoryFilter = document.getElementById('category-filter').value;
+
+                let filtered = events.filter(e => {
+                    const matchSearch = !searchQuery || 
+                        e.country.toLowerCase().includes(searchQuery) ||
+                        e.headline.toLowerCase().includes(searchQuery);
+                    const matchCategory = !categoryFilter || e.category === categoryFilter;
+                    return matchSearch && matchCategory;
+                });
+
+                // Update stats
+                updateStats(events);
+                notifyNewEvents(events);
+
+                // Display events
+                if (filtered.length === 0) {
+                    document.getElementById('events').innerHTML = `
+                        <div class="empty-state">
+                            <h2>No events found</h2>
+                            <p>Try adjusting your filters or search terms</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('events').innerHTML = filtered.map(e => `
+                        <div class="event-card">
+                            <div class="event-header">
+                                <div class="event-meta">
+                                    <span class="event-country">${e.country}</span>
+                                    <span class="event-category category-${e.category}">${e.category}</span>
+                                </div>
+                                <button
+                                    type="button"
+                                    class="ghost-button notify-event-btn"
+                                    data-country="${e.country}"
+                                    data-category="${e.category}"
+                                    data-headline="${e.headline.replace(/"/g, '&quot;')}"
+                                >Get notified like this</button>
+                            </div>
+                            <div class="event-title">${e.headline}</div>
+                            <div class="event-actions">
+                                <div class="event-date">📅 ${new Date(e.date).toLocaleDateString()}</div>
+                                <div class="event-note">Follow <strong>${e.country}</strong> or <strong>${e.category}</strong> events with one click.</div>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                showError(`Error fetching events: ${error.message}`);
+            }
+        }
+
+        // Replace the original fetchAndDisplay with map-aware version
+        const originalFetchAndDisplay = fetchAndDisplay;
+        fetchAndDisplay = fetchAndDisplayWithMap;
+
         async function initializeApp() {
             await validateStoredAuth();
             syncAuthUI();
             await syncPreferencesUI();
             await checkApiStatus();
+            initMap();
             await fetchAndDisplay();
 
             // Auto-refresh every 30 seconds
